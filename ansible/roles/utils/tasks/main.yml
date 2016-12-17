@@ -1,0 +1,12 @@
+---
+# these tasks install utils
+
+- name: ensure utils are installed
+  apt:
+    pkg: "{{item}}"
+    update_cache: yes
+  with_items: 
+    - curl
+    - unzip
+    - git
+    - memcached

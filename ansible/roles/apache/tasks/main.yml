@@ -1,0 +1,22 @@
+---
+# these tasks install and started apache
+
+- name: ensure apache is installed
+  action: apt pkg=apache2 state=installed
+
+- name: ensure apache is running
+  action: service name=apache2 state=started
+
+- name: ensure libapache2-mod-php is installed
+  action: apt pkg=libapache2-mod-php state=installed
+
+- name: enable mod_rewrite
+  action: command /usr/sbin/a2enmod rewrite
+
+- name: configuration file for our site
+  action: template src=etc-apache2-sites-available-default.j2 dest=/etc/apache2/sites-available/default
+
+- name: activate default host
+  file: src=/etc/apache2/sites-available/default dest=/etc/apache2/sites-enabled/000-default.conf state=link
+  notify: restart apache
+

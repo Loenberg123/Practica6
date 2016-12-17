@@ -1,0 +1,16 @@
+---
+# these tasks configure catch emails to logfile
+
+- name: ensure mail directory exists
+  file: dest=/var/log/mail state=directory mode=0777
+
+- name: file to catch emails
+  action: template src=usr-local-bin-sendmail.j2 dest=/usr/local/bin/sendmail mode=0755
+
+- name: change sendmail_path
+  lineinfile: dest=/etc/php/7.0/apache2/php.ini regexp="^[#|;]?sendmail_path =" insertafter="^[#|;]?sendmail_path =" line="sendmail_path = /usr/local/bin/sendmail"
+  notify: restart apache
+
+- name: activate log
+  lineinfile: dest=/etc/php/7.0/apache2/php.ini regexp="^[#|;]?mail.log =" insertafter="^[#|;]?mail.log =" line="mail.log = /var/log/mail/mail.log"
+  notify: restart apache

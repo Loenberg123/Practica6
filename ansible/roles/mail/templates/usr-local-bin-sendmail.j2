@@ -1,0 +1,6 @@
+#!/usr/bin/php
+<?php
+$input = file_get_contents('php://stdin');
+$filename = '/var/log/mail/'.time().'.txt';
+file_put_contents($filename, $input);
+?>

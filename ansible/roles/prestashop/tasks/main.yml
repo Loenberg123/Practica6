@@ -1,0 +1,39 @@
+---
+# these tasks install and configure prestashop
+
+- name: remove apache default directory
+  file: path=/var/www state=absent
+
+- name: clone prestashop github repository and submodules
+  git: repo={{ prestashop.repo }} dest=/var/www/ version={{ prestashop.version }} recursive=yes
+
+- name: create a mysql user
+  mysql_user: host={{ mysql.host }} name={{ mysql.user }} password={{ mysql.password }} priv=*.*:ALL state=present
+
+- name: setup empty database for project
+  mysql_db: name={{ mysql.name }} encoding={{ mysql.encoding }} collation={{ mysql.collation }} state=present login_host={{ mysql.host }} login_user={{ mysql.user }} login_password={{ mysql.password }}
+
+- name: install requirements with composer
+  composer: command=install working_dir=/var/www
+  when: prestashop.version.find('1.7') != -1
+
+- name: bugfix install 1.7 using cli
+  lineinfile:
+    dest: /var/www/app/config/parameters.php
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - { regexp: "'database_host' => '127.0.0.1',", line: "    'database_host' => '{{ mysql.host }}'," }
+    - { regexp: "'database_name' => 'prestashop',", line: "    'database_name' => '{{ mysql.name }}'," }
+    - { regexp: "'database_user' => 'root',", line: "    'database_user' => '{{ mysql.user }}'," }
+    - { regexp: "'database_password' => NULL,", line: "    'database_password' => '{{ mysql.password }}'," }
+  when: prestashop.version.find('1.7') != -1
+
+- name: install prestashop using cli
+  command: /usr/bin/php index_cli.php --domain={{ host.name }} --db_server={{ mysql.host }} --db_user={{ mysql.user }} --db_password={{ mysql.password }} --db_name={{ mysql.name }} --db_clear=1 --language={{ prestashop.language }} --timezone={{ prestashop.timezone }} --country={{ prestashop.country }} --firstname={{ prestashop.firstname }} --lastname={{ prestashop.lastname }} --password={{ prestashop.password }}  --email={{ prestashop.email }} --newsletter=0 chdir=/var/www/install-dev
+
+- name: set permissions
+  file: path=/var/www mode=0777 recurse=yes state=directory owner=www-data group=ubuntu
+
+- name: ensure apache is running
+  service: name=apache2 state=started

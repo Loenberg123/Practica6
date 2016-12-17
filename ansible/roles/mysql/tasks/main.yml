@@ -1,0 +1,18 @@
+---
+# these tasks install and started mysql
+
+- name: ensure mysql is installed
+  apt:
+    pkg: "{{item}}"
+    update_cache: yes
+  with_items: 
+    - mysql-server
+    - mysql-client
+    - python-mysqldb
+
+- name: uncomment log_slow_queries
+  lineinfile: dest=/etc/mysql/my.cnf regexp=^log_slow_queries line=#log_slow_queries
+  notify : restart mysql
+
+- name: ensure mysql is running
+  service: name=mysql state=started
